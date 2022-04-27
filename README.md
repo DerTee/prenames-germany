@@ -13,3 +13,5 @@ This dataset is incomplete, because there are no unified sources. Every german c
 * [Berliner Landesamt für Bürger- und Ordnungsangelegenheiten (LABO) / BerlinOnline Stadtportal GmbH & Co. KG](https://github.com/berlinonline/haeufige-vornamen-berlin)
   * License: [Creative Commons Namensnennung 3.0 Deutschland Lizenz](https://creativecommons.org/licenses/by/3.0/de/)
   * using the cleand up data as provided at https://github.com/berlinonline/haeufige-vornamen-berlin/tree/master/data/cleaned
+* [dl-de/by-2-0: Landeshauptstadt München – www.opengov-muenchen.de](https://opendata.muenchen.de/dataset/vornamen-von-neugeborenen-2015)
+  * [Datenlizenz Deutschland Namensnennung 2.0](https://www.govdata.de/dl-de/by-2-0) and more general usage information at https://opendata.muenchen.de/pages/nutzungsbedingungen
