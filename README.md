@@ -1,17 +1,15 @@
-Vornamen
-========
+# German prenames
 
-Deutsche Vornamen, CSV-Daten, sortiert nach Häufigkeit.
+Aggregated CSV data of prenames from a couple of major German cities.
 
-Quelle der Daten:
+This dataset is incomplete, because there are no unified sources. Every german city *can* provide data, but usually only the bigger cities do.
 
-* [Stadt Köln, 19.1.2018](https://offenedaten-koeln.de/dataset/vornamen)
-* Lizenz: [Creative Commons Namensnennung 3.0 DE](https://creativecommons.org/licenses/by/3.0/de/)
+CSV-data is seperated by `,`.
 
-Endungen signalisieren Dateiformat:
-* SCSV: Getrennt durch `;`
-* CSV: Getrennt durch `,`
-* DAT: Getrennt durch ` ` (Leerzeichen)
+Data sources:
 
-Shell-Skripte nutzen das Tool [q](http://harelba.github.io/q/), das SQL-Statements auf CSV-Dateien ausführen kann.
+* [Stadt Köln, 2022-04-27](https://offenedaten-koeln.de/dataset/vornamen)
+  * License: [Creative Commons Namensnennung 3.0 DE](https://creativecommons.org/licenses/by/3.0/de/)
+* [Stadt Leipzig, 2022-04-27] (https://opendata.leipzig.de/dataset/vornamensstatistik)
+  * License: [Datenlizenz Deutschland Namensnennung 2.0](https://www.govdata.de/dl-de/by-2-0)
 
