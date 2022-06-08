@@ -5,25 +5,20 @@ import os
 import glob
 import pandas as pd
 
-raw_files_per_city = []
-
-cwd = os.path.curdir
-root_dir = os.path.abspath(os.path.join(cwd, ".."))
-# use absolute paths to avoid confusion, even though they require a little more cleanup at times
-data_path = os.path.join(root_dir, "raw")
-data_path
-
-
-pattern = os.path.join(data_path, "Vornamen_*.csv")
-file_paths = [os.path.split(x) for x in glob.glob(pattern)]
-file_paths
-
-cities = list(set([x[1].split("_")[1] for x in file_paths]))
-
 # this is the standardized column format, that all other formats will be converted to
-std_columns = ['name', 'gender', 'count', 'position',
-               'state', 'district', 'city', 'borough',
-               'year', 'sourcefile']
+std_format = {
+    'name': "str",
+    'gender': "str",
+    'count': "int64",
+    'position': "int32",
+    'state': "str",
+    'district': "str",
+    'city': "str",
+    'borough': "str",
+    'year': "int64",
+    'sourcefile': "str",
+}
+std_columns = list(std_format.keys())
 
 def convert(city, year, df):
     if city == 'Berlin':
@@ -37,8 +32,8 @@ def convert(city, year, df):
     else:
         raise Exception("unknown city '" + city + "'")
 
-def verify_columns(columns):
-    cols = list(columns)
+def verify_columns(df):
+    cols = list(df.columns)
     cols.sort()
 
     std = list(std_columns)
@@ -78,10 +73,10 @@ def convert_berlin(year, df):
     else:
         raise Exception("Unknown columns for Berlin in the year " + str(year) + "! Got: " + " ".join(columns))
     df_['state'] = 'Berlin'
-    df_['district'] = None
+    df_['district'] = ''
     df_['city'] = 'Berlin'
     
-    verify_columns(df_.columns)
+    verify_columns(df_)
     return df_
 
 
@@ -98,8 +93,8 @@ def convert_muenchen(year, df):
     df_ = df.rename(columns=mapping, copy=True)
     df_['state'] = 'Bayern'
     df_['district'] = 'Oberbayern'
-    df_['borough'] = None
-    verify_columns(df_.columns)
+    df_['borough'] = ''
+    verify_columns(df_)
     return df_
 
 def convert_koeln(year, df):
@@ -111,9 +106,9 @@ def convert_koeln(year, df):
     }
     df_ = df.rename(columns=mapping, copy=True)
     df_['state'] = 'Nordrhein-Westfalen'
-    df_['district'] = None
-    df_['borough'] = None
-    verify_columns(df_.columns)
+    df_['district'] = ''
+    df_['borough'] = ''
+    verify_columns(df_)
     return df_
 
 def convert_leipzig(year, df):
@@ -157,49 +152,73 @@ def convert_leipzig(year, df):
         df_ = df.rename(columns={'anzahl': 'count', 'vorname': 'name', 'geschlecht': 'gender'}, copy=True)
     else:
         raise Exception("unknown year " + year + " for leipzig, fix the code!")
-    df_['borough'] = None
-    df_['district'] = None
+    df_['borough'] = ''
+    df_['district'] = ''
     df_['state'] = 'Sachsen'
    
-    verify_columns(df_.columns)
+    verify_columns(df_)
     return df_
 
-dfs_by_city = {}
-for f in file_paths:
-    parts = f[1].split("_")
-    city = parts[1]
-    year = int(parts[2].rstrip(".csv"))
-    print(city, year, f)
-    fullpath = os.path.join(f[0], f[1])
-    df = pd.read_csv(fullpath, sep=None, engine='python')
-    print("            Columns: '" + "' '".join(df.columns) + "'")
-    df['year'] = year
-    df['city'] = city
-    df['sourcefile'] = fullpath
-    if 'position' not in df.columns:
-        df['position'] = None
-    
-    # convert to standardized columns:
-    df_standardized = convert(city, year, df)
-    
-    if not city in dfs_by_city:
-        dfs_by_city[city] = []
-    dfs_by_city[city].append(df_standardized)
+def get_file_paths():
+    """Brittle, hardcoded and super specific to find the correct files in the directory structure"""
+    cwd = os.path.curdir
+    root_dir = os.path.abspath(os.path.join(cwd, ".."))
+    # use absolute paths to avoid confusion, even though they require a little more cleanup at times
+    data_path = os.path.join(root_dir, "raw")
 
-dfs_full_by_city = {}
-dfs_list = []
-for city, dfs in dfs_by_city.items():
-    print(city, len(dfs))
-    dfs_full_by_city[city] = pd.concat(dfs, ignore_index=True)
-    dfs_list.append(dfs_full_by_city[city])
-    output_file = os.path.join(root_dir, "Vornamen_" + city + "_Gesamt.csv")
+    pattern = os.path.join(data_path, "Vornamen_*.csv")
+    file_paths = [os.path.split(x) for x in glob.glob(pattern)]
+    return (file_paths, root_dir)
+
+def extract_cities_from_filenames(file_paths):
+    """Brittle, super specific function to get a list of city names from filenames
+    which all have to be formatted the same"""
+    return list(set([x[1].split("_")[1] for x in file_paths]))
+    
+def aggregate_raw_files():
+    raw_files_per_city = []
+    file_paths, root_dir = get_file_paths()
+    cities = extract_cities_from_filenames(file_paths)
+
+    dfs_by_city = {}
+    for f in file_paths:
+        parts = f[1].split("_")
+        city = parts[1]
+        year = int(parts[2].rstrip(".csv"))
+        print(city, year, f)
+        fullpath = os.path.join(f[0], f[1])
+        df = pd.read_csv(fullpath, sep=None, engine='python')
+        print("            Columns: '" + "' '".join(df.columns) + "'")
+        df['year'] = year
+        df['city'] = city
+        df['sourcefile'] = fullpath
+        if 'position' not in df.columns:
+            df['position'] = None
+
+        # convert to standardized columns:
+        df_standardized = convert(city, year, df)
+
+        if not city in dfs_by_city:
+            dfs_by_city[city] = []
+        dfs_by_city[city].append(df_standardized)
+
+    dfs_full_by_city = {}
+    dfs_list = []
+    for city, dfs in dfs_by_city.items():
+        print(city, len(dfs))
+        dfs_full_by_city[city] = pd.concat(dfs, ignore_index=True)
+        dfs_list.append(dfs_full_by_city[city])
+        output_file = os.path.join(root_dir, "Vornamen_" + city + "_Gesamt.csv")
+        print("writing", output_file, "...")
+        dfs_full_by_city[city].to_csv(output_file, index=False)
+
+    dfs_all = pd.concat(dfs_list, ignore_index=True)
+
+    d = dfs_all.drop(columns="sourcefile")
+
+    output_file = os.path.join(root_dir, "Vornamen_Deutschland_Gesamt.csv")
     print("writing", output_file, "...")
-    dfs_full_by_city[city].to_csv(output_file, index=False)
+    d.to_csv(output_file, index=False)
 
-dfs_all = pd.concat(dfs_list, ignore_index=True)
-
-d = dfs_all.drop(columns="sourcefile")
-
-output_file = os.path.join(root_dir, "Vornamen_Deutschland_Gesamt.csv")
-print("writing", output_file, "...")
-d.to_csv(output_file, index=False)
+if __name__ == "__main__":
+    aggregate_raw_files()
